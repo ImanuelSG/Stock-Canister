@@ -1,0 +1,9 @@
+service: () -> {
+    createAccount: (record {username:text}) -> (variant {Ok:record {ID:principal; fullname:text;balance:nat64;createdAt:nat64;updatedAt:nat64}; Err:variant{Forbidden:text;BadRequest:text}});
+    topUpBalance: (record {amount:nat64}) -> (variant {Ok:record {ID:principal; fullname:text;balance:nat64;createdAt:nat64;updatedAt:nat64}; Err:variant{Forbidden:text;BadRequest:text}});
+    createStock: (record {stockSymbol:text; stockName:text;stockPrice:nat64;availableQuantity:nat64}) -> (variant {Ok:record {stockSymbol:text; stockName:text;stockPrice:nat64;availableQuantity:nat64}; Err:variant{Forbidden:text;BadRequest:text}});
+    deteleStock: (text) -> (variant {Ok:record {stockSymbol:text; stockName:text;stockPrice:nat64;availableQuantity:nat64}; Err:variant{Forbidden:text;BadRequest:text}});
+    buyStock: (record {stockSymbol:text;quantity:nat64}) -> (variant {Ok:record {ID:principal; fullname:text;balance:nat64;createdAt:nat64;updatedAt:nat64}; Err:variant{Forbidden:text;BadRequest:text}});
+    sellStock: (record{stockSymbol:text;quantity:nat64}) -> (variant {Ok:record {ID:principal; fullname:text;balance:nat64;createdAt:nat64;updatedAt:nat64}; Err:variant{Forbidden:text;BadRequest:text}});
+    getPortofolio: () -> (variant {Ok:vec record {stockSymbol:text; stockName:text;stockPrice:nat64;Quantity:nat64;Owner:principal}; Err:variant{Forbidden:text;BadRequest:text}});
+}
