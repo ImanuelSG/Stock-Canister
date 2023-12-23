@@ -1,12 +1,9 @@
 service: () -> {
-    addLocker: (record {number:text}) -> (variant {Ok:record {id:principal; availability:bool; number:text; renterId:opt principal}; Err:text});
-    createUser: (record {name:text}) -> (variant {Ok:record {id:principal; name:text; createdAt:nat64}; Err:text});
-    evictLocker: (principal) -> (variant {Ok:bool; Err:text});
-    getLockerById: (principal) -> (variant {Ok:record {id:principal; availability:bool; number:text; renterId:opt principal}; Err:text}) query;
-    getLockers: () -> (vec record {id:principal; availability:bool; number:text; renterId:opt principal}) query;
-    getRenterById: (principal) -> (variant {Ok:record {id:principal; duration:nat64; userRenterId:principal; lockerId:principal}; Err:text}) query;
-    getRenters: () -> (vec record {id:principal; duration:nat64; userRenterId:principal; lockerId:principal}) query;
-    getUserById: (principal) -> (variant {Ok:record {id:principal; name:text; createdAt:nat64}; Err:text}) query;
-    getUsers: () -> (vec record {id:principal; name:text; createdAt:nat64}) query;
-    rentLocker: (principal, record {duration:nat64; lockerId:principal}) -> (variant {Ok:record {id:principal; duration:nat64; userRenterId:principal; lockerId:principal}; Err:text});
+    buyStock: (record {stockSymbol:text; quantity:nat64}) -> (variant {Ok:record {ID:principal; balance:nat64; createdAt:nat64; fullName:text; updatedAt:nat64}; Err:variant {Forbidden:text; BadRequest:text}});
+    createAccount: (record {username:text}) -> (variant {Ok:record {ID:principal; balance:nat64; createdAt:nat64; fullName:text; updatedAt:nat64}; Err:variant {Forbidden:text; BadRequest:text}});
+    createStock: (record {stockName:text; stockSymbol:text; availableQuantity:nat64; stockPrice:nat64}) -> (variant {Ok:record {stockName:text; stockSymbol:text; availableQuantity:nat64; stockPrice:nat64}; Err:variant {Forbidden:text; BadRequest:text}});
+    deleteStock: (text) -> (variant {Ok:record {stockName:text; stockSymbol:text; availableQuantity:nat64; stockPrice:nat64}; Err:variant {Forbidden:text; BadRequest:text}});
+    getPortofolio: () -> (variant {Ok:vec record {stockName:text; stockSymbol:text; Quantity:nat64; Owner:principal; stockPrice:nat64}; Err:variant {Forbidden:text; BadRequest:text}}) query;
+    sellstock: (record {stockSymbol:text; quantity:nat64}) -> (variant {Ok:record {ID:principal; balance:nat64; createdAt:nat64; fullName:text; updatedAt:nat64}; Err:variant {Forbidden:text; BadRequest:text}});
+    topUpBalance: (record {amount:nat64}) -> (variant {Ok:record {ID:principal; balance:nat64; createdAt:nat64; fullName:text; updatedAt:nat64}; Err:variant {Forbidden:text; BadRequest:text}});
 }
