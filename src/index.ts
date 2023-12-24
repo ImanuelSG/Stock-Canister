@@ -13,6 +13,7 @@ import {
     query,
     text,
     update,
+    Void
   } from 'azle';
 
 
@@ -29,6 +30,7 @@ let StockDetails = Record({
     stockName: text,
     stockPrice: nat64,
     Quantity: nat64,
+    Total: nat64,
     Owner: Principal,
 })
 
@@ -89,6 +91,7 @@ export default Canister({
             fullName: payload.username,
             
         }
+        Accounts.insert(ic.caller(), newAccount);
         return Ok(newAccount);
     }),
     //TopUpBalance
@@ -147,7 +150,7 @@ export default Canister({
             return Err({BadRequest : 'Stock Doesnt Exist'})
         }
         const stock : typeof Stock = Stocks.get(payload).Some;
-        Stocks.delete(payload);
+        Stocks.remove(payload);
         return Ok(stock);
     }),
 
@@ -174,11 +177,14 @@ export default Canister({
         if (stock.availableQuantity < payload.quantity) {
             return Err({ BadRequest: 'Insufficient Stock' });
         }
+        const newQuantity = stockDetails ? stockDetails.Quantity + payload.quantity : payload.quantity;
+
         const updatedStockDetails: typeof StockDetails = {
             stockSymbol: stock.stockSymbol,
             stockName: stock.stockName,
             stockPrice: stock.stockPrice,
-            Quantity: stockDetails ? stockDetails.Quantity + payload.quantity : payload.quantity,
+            Quantity: newQuantity,
+            Total: newQuantity * stock.stockPrice,
             Owner: ic.caller(),
         };
         const updatedAccount: typeof Account = {
@@ -216,11 +222,13 @@ export default Canister({
         if (!stockDetails || stockDetails.Quantity < payload.quantity) {
             return Err({ BadRequest: 'Insufficient Stock' });
         }
+        const newQuantity = stockDetails.Quantity - payload.quantity;
         const updatedStockDetails: typeof StockDetails = {
             stockSymbol: stock.stockSymbol,
             stockName: stock.stockName,
             stockPrice: stock.stockPrice,
-            Quantity: stockDetails.Quantity - payload.quantity,
+            Quantity: newQuantity,
+            Total: newQuantity * stock.stockPrice,
             Owner: ic.caller(),
         };
         const updatedAccount: typeof Account = {
@@ -236,21 +244,55 @@ export default Canister({
         if (updatedStockDetails.Quantity > 0) {
             ListOfStockDetails.insert(stockDetailsKey, updatedStockDetails);
         } else {
-            ListOfStockDetails.delete(stockDetailsKey);
+            ListOfStockDetails.remove(stockDetailsKey);
         }
         return Ok(updatedAccount);
     }),
-    getPortofolio: query([], Result(Vec(StockDetails), Error), () => {
+    getPortofolio: query([], Result(Record({portfolio: Vec(StockDetails), totalAsset: nat64}), Error), () => {
         if (!isAccountExists(ic.caller())) {
             return Err({ Forbidden: 'Please make an account first' });
         }
-        const portofolio: typeof StockDetails[] = [];
-        ListOfStockDetails.forEach((stockDetails : typeof StockDetails) => {
-            if (stockDetails.Owner === ic.caller()) {
-                portofolio.push(stockDetails);
-            }
+        const stockdetails = ListOfStockDetails.values();
+        const portfolio = stockdetails.filter((stockdetail: typeof StockDetails) => stockdetail.Owner.toText() === ic.caller().toText());
+        
+        let totalAsset = 0n;
+        portfolio.forEach((stockdetail: typeof StockDetails) => {
+            totalAsset += stockdetail.Total;
         });
-        return Ok(portofolio);
+        return Ok({
+            portfolio: portfolio,
+            totalAsset: totalAsset,
+        });
+    }),
+    getStocks: query([], Result(Vec(Stock), Error), () => {
+        if(!Stocks){
+            return Err({BadRequest : 'No Stocks'})
+        }
+        if(!isAccountExists(ic.caller())){
+            return Err({Forbidden : 'Please make an account first'})
+        }
+        return Ok(Stocks.values());
+    }),
+    getStockDetails: query([text], Result(StockDetails, Error), (payload) => {
+        if (!isStockExists(payload)) {
+            return Err({ BadRequest: 'Stock Doesnt Exist' });
+        }
+        if (!isAccountExists(ic.caller())) {
+            return Err({ Forbidden: 'Please make an account first' });
+        }
+        
+        const user = Accounts.get(ic.caller()).Some;
+        const stockDetails: typeof StockDetails = ListOfStockDetails.get(`${user.fullName}${payload}`).Some;
+        if (!stockDetails) {
+            return Err({ BadRequest: 'Stock Details Doesnt Exist ' });
+        }
+        return Ok(stockDetails);
+    }),
+    resetdetail: update([], Void, () => {
+        const dumpstockdetails = ListOfStockDetails.items();
+        dumpstockdetails.forEach((key:text) => {
+            ListOfStockDetails.remove(key);
+        });
     }),
 
 })
